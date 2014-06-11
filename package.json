@@ -1,0 +1,27 @@
+{
+  "name": "Officer",
+  "version": "0.0.1",
+  "description": "Officer is a schema-based JavaScript object validator and transformer.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:jonathangordon/officer.git"
+  },
+  "keywords": [
+    "validation",
+    "schema",
+    "object",
+    "transformation"
+  ],
+  "author": "Jonathan Gordon <me@jonathangordon.me>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jonathangordon/officer/issues"
+  },
+  "dependencies": {
+    "underscore": "~1.6.0"
+  }
+}
