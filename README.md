@@ -137,7 +137,7 @@ I was unhappy with the validation tools available online and wanted something th
 
 ##Version
 
-0.0.1
+0.1.0
 
 ##Requirements
 
