@@ -1,114 +1,163 @@
-Officer
-=========
+#Officer
 
-Officer is a schema-based JavaScript object validator and transformer.
+Officer is a **powerful** schema-based JavaScript object validator and transformer. Keep your objects in line with Officer.
 
-  - Operates on arbitrary JavaScript objects
-  - Specify pre- and post-validation functions
-  - Supports a large variety of validation and transformation options
+- Operates on arbitrary, multi-level JavaScript objects
+- Supports collections and sub-objects
+- Specify pre- and post-validation functions
+- Supports a large variety of validation and transformation options
+- Provides detailed reports about processing and failures
 
-Use
----
+##Use
 
-___First you need a schema___ to validate against. For this example, we'll be checking that a particular string
+###tl;dr
 
-**objectid-schema.js**
+1. Specify an object schema
+2. Create a new Officer object, passing in the schema and object to validate
+3. Validate your object with your shiny new Officer and enjoy access to a large report about wha
 
-```javascript
-    var objectIDSchema, ObjectID;
-    
-    ObjectID = require('mongodb').ObjectID;
-    
-    objectIDSchema = {
-      _id: {
-        // Specify the expected type of the data
-        type: ObjectID,
-        // If the data isn't initially of the right type, attempt to coerce by
-        // way of type-casting before type-validation is done.
-        coerce: true,
-        // Redundant: Collections (an array of these values) are false by default
-        collection: false,
-        // Redundant: entries in schema are required by default
-        optional: false,
-        // If the data is missing (and required), you can provide a default value
-        // as a static value or a function that returns a value
-        "default": function () {
-          var id, idString;
-        
-          id = new ObjectID();
-          return id;
-        },
-        // Validation can include a test against a regular expression
-        regExp: {
-          rule: (/^[0-9a-f]{24}$/i),
-          error: 'Must be a valid ID format'
-        },
-        // If the data should be modified after initial validation, this step
-        // can be added in the 'after' method
-        after: function (id) {
-          if (id instanceof ObjectID)
-          return id;
-        
-          return new ObjectID(id);
-        }
-      }
-    };
-    
-    module.exports = objectIDSchema;
+###Longer version:
 
+_First you need a schema_ to validate against. For this example, we'll be checking that some incoming cat JSON objects are the correct format, modifying and adding any information that can and should be before storing them.
+
+**Sample POST data**
+```json
+[{
+  "name": "Shadow",
+  "fur": { "coverage": 1, "color": { "h": 0, "s": 0, "l":  2 } }
+},{
+  "name": "Mittens",
+  "fur": [
+  { "coverage": 0.96, "color": { "h": 0, "s": 0, "l": 100 } },
+  { "coverage": 0.04, "color": { "h": 0, "s": 0, "l":  50 } }
+  ]
+},{
+  "name": "Patches",
+  "fur": [
+  { "coverage": 0.45, "color": { "h":  0, "s":  0, "l": 100 } },
+  { "coverage": 0.30, "color": { "h": 33, "s": 90, "l":  45 } },
+  { "coverage": 0.25, "color": { "h":  0, "s":  0, "l":   0 } }
+  ]
+}]
 ```
 
-Once you have your schema, you can ___load it up and verify your object___.
-
+**Schema Level 1) ./schema/cat.js**
 ```javascript
-  var Officer = require('officer');
-  var schema = require('./objectid-schema');
-    
-  var data = {
-    _id: "507f191e810c19729de860ea"
+module.exports = {
+  // each top-level key matches the object property to look for and validate
+  name: {
+    // The type is can be a JavaScript primative
+    type: String,
+    // If the data is missing, we can specify a default value or function
+    "default": "Kitty",
+    // regular expressions can be specified with an option error message
+    regExp: {
+      pattern: (/^[a-z\.\s]{1,32}$/i),
+      error: "What kind of name is that?"
+    }
+  },
+  fur: {
+    // nested/embedded schemas are already supported
+    type: require('./fur'),
+    // this tells Officer to also accept an array of matching values
+    collection: true
+  }
+};
+```
+
+**Schema Level 2) ./schema/fur.js**
+```javascript
+module.exports = {
+  color: {
+    // nesting can go as deep as you'd like. Assembling schemas like this gives powerful reusability.
+    type: require('./color-hsla'),
+  },
+  coverage: {
+    type: Number,
+    // there are a few special built-in validation functions: Numbers->min, max being among them
+    min: 0,
+    max: 1
+  }
+};
+```
+
+**Schema Level 3) ./schema/color-hsla**
+```javascript
+var rangedInteger = function(min, max) {
+  return  {
+    type: Number,
+    min: min,
+    max: max,
+    // You can provide a function to perform on the value before it's validated with built-in validation
+    // an .after() function can also be provided
+    before: function (n) {
+      return Math.round(n);
+    }
   };
-    
-  var officer = new Officer(schema, data);
-    
-  if (officer.validate()) 
-    console.log('Looks good!');
-  else
-    console.log(officer.err.getMessages())
+};
+
+module.exports = {
+  h: rangedInteger(0, 255),
+  s: rangedInteger(0, 100),
+  l: rangedInteger(0, 100),
+  a: {
+    type: Number,
+    fallback: 1,
+    min: 0,
+    max: 1
+  }
+};
 ```
 
-Are you wondering why I made this?
-----
+Once you have your schema, you can _load it up and verify your object_.
 
-I was unhappy with the validation tools available online and wanted something that would work on complex objects with powerful schemas. I developed this tool as a way to work with JSON data going into my MongoDB collections without having to use a tool like Mongoose.
+**App) index.js**
+```javascript
+var Officer   = require('officer');
+var catSchema = require('./schema/cat');
+var catModel  = /* require our cat model */
+var cats      = /* pull in our POST data */
 
-Version
-----
+cats.each(function (cat) {
+  var catOfficer = new Officer(catSchema, cat);
+
+  if (catOfficer.validate()) {
+    catModel.save(cat);
+  }
+  else {
+    console.log(catOfficer.err.getMessages())
+  }
+});
+```
+
+##Why did I make this?
+
+
+I was unhappy with the validation tools available online and wanted something that would work on complex objects with powerful schemas. I developed this tool as a way to work with JSON data going into my MongoDB collections without having to use a tool like Mongoose. It's in no way tied to MongoDB though.
+
+##Version
 
 0.0.1
 
-Requirements
------------
+##Requirements
 
-To use Officer, just isntall it with NPM.
+Officer requires node.js and npm. It is dependent on the underscore package, but that will be removed in a later release.
 
-Installation
---------------
+##Installation
 
-The easiest way to get it into your node project is with npm
+The easiest way to get it into your node project is through npm
 
 ```sh
 npm install officer --save
 ```
 
-Contribution and Feedback
--------------------------
+##Contribution and Feedback
 
 If you find an error in the tool, please fork the code, fix it and request a pull.
 
 Feedback and requests for new features are welcome.
 
-License
-----
+##License
 
 MIT
 
