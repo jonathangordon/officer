@@ -28,15 +28,15 @@ _First you need a schema_ to validate against. For this example, we'll be checki
 },{
   "name": "Mittens",
   "fur": [
-  { "coverage": 0.96, "color": { "h": 0, "s": 0, "l": 100 } },
-  { "coverage": 0.04, "color": { "h": 0, "s": 0, "l":  50 } }
+    { "coverage": 0.96, "color": { "h": 0, "s": 0, "l": 100 } },
+    { "coverage": 0.04, "color": { "h": 0, "s": 0, "l":  50 } }
   ]
 },{
   "name": "Patches",
   "fur": [
-  { "coverage": 0.45, "color": { "h":  0, "s":  0, "l": 100 } },
-  { "coverage": 0.30, "color": { "h": 33, "s": 90, "l":  45 } },
-  { "coverage": 0.25, "color": { "h":  0, "s":  0, "l":   0 } }
+    { "coverage": 0.45, "color": { "h":  0, "s":  0, "l": 100 } },
+    { "coverage": 0.30, "color": { "h": 33, "s": 90, "l":  45 } },
+    { "coverage": 0.25, "color": { "h":  0, "s":  0, "l":   0 } }
   ]
 }]
 ```
