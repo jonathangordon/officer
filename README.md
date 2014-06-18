@@ -14,11 +14,12 @@ Officer is a **powerful** schema-based JavaScript object validator and transform
 
 1. Specify an object schema
 2. Create a new Officer object, passing in the schema and object to validate
-3. Validate your object with your shiny new Officer and enjoy access to a large report about wha
+3. Validate your object with your shiny new Officer
+  * Optional: Enjoy access to a large report about what happened to your object as well as detailed error messages
 
 ###Longer version:
 
-_First you need a schema_ to validate against. For this example, we'll be checking that some incoming cat JSON objects are the correct format, modifying and adding any information that can and should be before storing them.
+_First you need a schema_ to validate against. For this example, we'll be checking that some incoming cat JSON objects are the correct format, modifying and adding any information that can and should be, and then storing them.
 
 **Sample POST data**
 ```json
@@ -41,12 +42,65 @@ _First you need a schema_ to validate against. For this example, we'll be checki
 }]
 ```
 
+First, the schema as a single file (_not as awesome_).
+
+**The Full Schema) ./schema/full-cat.js**
+```javascript
+var rangedInteger = function(min, max) {
+  return  {
+    type: Number,
+    min: min,
+    max: max,
+    // You can provide a function to perform on the value before it's validated with built-in validation an .after() function can also be provided
+    before: function (n) {
+      return Math.round(n);
+    }
+  };
+};
+
+module.exports = {
+  name: {
+    type: String,
+    "default": "Kitty",
+    regExp: {
+      pattern: (/^[a-z\.\s]{1,32}$/i),
+      error: "What kind of name is that?"
+    }
+  },
+  fur: {
+    type: {
+      color: {
+        type: {
+          h: rangedInteger(0, 255),
+          s: rangedInteger(0, 100),
+          l: rangedInteger(0, 100),
+          a: {
+            type: Number,
+            fallback: 1,
+            min: 0,
+            max: 1
+          }
+        },
+      },
+      coverage: {
+        type: Number,
+        min: 0,
+        max: 1
+      }
+    },
+    collection: true
+  }
+};
+```
+
+And then the schema broken up into sub-files to define sub-objects (_more awesome_).
+
 **Schema Level 1) ./schema/cat.js**
 ```javascript
 module.exports = {
   // each top-level key matches the object property to look for and validate
   name: {
-    // The type is can be a JavaScript primative
+    // the type can be a JavaScript constructor function
     type: String,
     // If the data is missing, we can specify a default value or function
     "default": "Kitty",
@@ -57,7 +111,7 @@ module.exports = {
     }
   },
   fur: {
-    // nested/embedded schemas are already supported
+    // the type can be an embedded object literal describing the structure (a schema)
     type: require('./fur'),
     // this tells Officer to also accept an array of matching values
     collection: true
@@ -69,7 +123,7 @@ module.exports = {
 ```javascript
 module.exports = {
   color: {
-    // nesting can go as deep as you'd like. Assembling schemas like this gives powerful reusability.
+    // nesting can go as deep as you'd like
     type: require('./color-hsla'),
   },
   coverage: {
@@ -88,8 +142,7 @@ var rangedInteger = function(min, max) {
     type: Number,
     min: min,
     max: max,
-    // You can provide a function to perform on the value before it's validated with built-in validation
-    // an .after() function can also be provided
+    // You can provide a function to perform on the value before it's validated with built-in validation. An .after() function can also be provided
     before: function (n) {
       return Math.round(n);
     }
@@ -155,7 +208,7 @@ npm install officer --save
 
 If you find an error in the tool, please fork the code, fix it and request a pull.
 
-Feedback and requests for new features are welcome.
+**Feedback and feature requests are welcome.**
 
 ##License
 
