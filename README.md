@@ -12,6 +12,12 @@ Officer is a **powerful** schema-based JavaScript object validator and transform
 
 ###tl;dr
 
+```javascript
+Officer = require('officer');
+var officer = new Officer(schema);
+officer.validate(data);
+```
+
 1. Specify an object schema
 2. Create a new Officer object, passing in the schema and object to validate
 3. Validate your object with your shiny new Officer
@@ -172,13 +178,14 @@ var catModel  = /* require our cat model */
 var cats      = /* pull in our POST data */
 
 cats.each(function (cat) {
-  var catOfficer = new Officer(catSchema, cat);
+  var catOfficer = new Officer(catSchema);
 
-  if (catOfficer.validate()) {
-    catModel.save(cat);
+  if (catOfficer.validate(cat)) {
+    catModel.save(cat); // The cat object has been modified directly
   }
   else {
     console.log(catOfficer.err.getMessages())
+    // Also see what was done on an object with catOfficer.info.getMessages()
   }
 });
 ```
@@ -190,7 +197,7 @@ I was unhappy with the validation tools available online and wanted something th
 
 ##Version
 
-0.1.0
+0.2.0
 
 ##Requirements
 
