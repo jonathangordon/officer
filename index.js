@@ -154,8 +154,6 @@ Officer = function (schema, path) {
   this.schema     = schema;
   this.schemaKeys = _.keys(this.schema);
   this.path       = makeArray(path ? path : 'root');
-  this.err        = new DocumentReport(_.last(this.path));
-  this.info       = new DocumentReport(_.last(this.path));
   this.hasRun     = false;
 };
 
@@ -164,6 +162,8 @@ Officer.prototype.isValid = function () {
 };
 
 Officer.prototype.validate = function (doc) {
+  this.err        = new DocumentReport(_.last(this.path));
+  this.info       = new DocumentReport(_.last(this.path));
   this.doc = doc;
   _.each(this.doc, this.filterProperty, this);
   _.each(this.schema, this.examineProperty, this);
