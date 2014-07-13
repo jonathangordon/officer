@@ -148,8 +148,8 @@ DocumentReport.prototype.getMessages = function () {
   return messages;
 };
 
-Officer = function (schema, doc, path) {
-  this.doc        = doc;
+Officer = function (schema, path) {
+  this.doc        = undefined;
   this.docKeys    = _.keys(this.doc);
   this.schema     = schema;
   this.schemaKeys = _.keys(this.schema);
@@ -163,11 +163,12 @@ Officer.prototype.isValid = function () {
   return (this.hasRun && this.err.getMessages().length === 0);
 };
 
-Officer.prototype.validate = function () {
+Officer.prototype.validate = function (doc) {
+  this.doc = doc;
   _.each(this.doc, this.filterProperty, this);
   _.each(this.schema, this.examineProperty, this);
   this.hasRun = true;
-  return this.isValid();
+  return this.isValid()
 };
 
 Officer.prototype.filterProperty = function (prop, docKey) {
@@ -223,8 +224,8 @@ Officer.prototype.validateChildDocument = function (schemaKey, doc) {
   if (doc === undefined)
     doc = this.doc[schemaKey];
 
-  var validator = new Officer(schema, doc, path);
-  validator.validate();
+  var validator = new Officer(schema, path);
+  validator.validate(doc);
 
   this.err.addChildDocument(validator.err);
   this.info.addChildDocument(validator.info);
@@ -249,8 +250,8 @@ Officer.prototype.validateCollection = function (schemaKey) {
     var docPath = getCurrentPath(path, index);
     var schema  = this.schema[schemaKey].type;
 
-    var validator = new Officer(schema, doc, docPath);
-    validator.validate();
+    var validator = new Officer(schema, docPath);
+    validator.validate(doc);
 
     collectionErr.addChildDocument(validator.err);
     collectionInfo.addChildDocument(validator.info);
